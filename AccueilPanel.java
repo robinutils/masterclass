@@ -9,9 +9,17 @@ import java.util.Random;
 public class AccueilPanel extends JPanel {
     private final MasterMindGame game;
     private JLabel classementLabel;
-    private List<Circle> circles; // Liste des cercles colorés
-    private Timer animationTimer; // Timer pour l'animation des cercles
-
+    private List<Circle> circles;
+    private Timer animationTimer;
+    private Image backgroundImage;
+    
+    // Références des composants
+    private JTextField nomJoueurField;
+    private JButton commencerBtn;
+    private JPanel difficultyPanel;
+    private JLabel instructionLabel;
+    private JButton jouerBtn;
+    
     public AccueilPanel(MasterMindGame game) {
         this.game = game;
         setLayout(new GridBagLayout());
@@ -20,15 +28,14 @@ public class AccueilPanel extends JPanel {
         circles = new ArrayList<>();
         initCircles();
 
-        // Créer un timer pour l'animation
         animationTimer = new Timer(30, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 moveCircles();
-                repaint(); // Redessine les cercles
+                repaint();
             }
         });
-        animationTimer.start(); // Démarrer l'animation
+        animationTimer.start();
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(20, 20, 20, 20);
@@ -36,107 +43,184 @@ public class AccueilPanel extends JPanel {
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.CENTER;
 
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        ImageIcon settingsIcon = new ImageIcon("./gear_icon.png"); 
+        JButton settingsButton = new JButton(settingsIcon);
+        settingsButton.setPreferredSize(new Dimension(20, 20));
+        settingsButton.setBorder(BorderFactory.createEmptyBorder());
+        settingsButton.setContentAreaFilled(false);
+        settingsButton.addActionListener(e -> openThemeDialog());
+        add(settingsButton, gbc);
+
+        // Centrer le reste des éléments
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+
         JLabel welcomeLabel = new JLabel("MasterClass");
-        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        welcomeLabel.setFont(loadCustomFont("./mario_font.ttf", 48f));
         welcomeLabel.setForeground(Color.WHITE);
         add(welcomeLabel, gbc);
+
+        gbc.gridy++;
+
+        JPanel instructionPanel = new JPanel();
+        instructionPanel.setBackground(new Color(50, 50, 50));
+        instructionPanel.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+        instructionPanel.setLayout(new BoxLayout(instructionPanel, BoxLayout.Y_AXIS));
+        
+        JLabel instructionTitle = new JLabel("Consignes du Jeu");
+        instructionTitle.setFont(loadCustomFont("./mario_font.ttf", 24f));
+        instructionTitle.setForeground(Color.WHITE);
+        instructionTitle.setAlignmentX(CENTER_ALIGNMENT);
+        
+        JLabel instructionText = new JLabel("<html><body style='text-align:center;'>"
+                + "1. Choisissez la difficulté.<br>"
+                + "2. Devinez la combinaison de couleurs secrète.<br>"
+                + "3. Utilisez les indices bien placés et mal placés.<br>"
+                + "4. Trouvez la combinaison avant d'épuiser vos tentatives!"
+                + "</body></html>");
+        instructionText.setFont(new Font("Arial", Font.PLAIN, 16));
+        instructionText.setForeground(Color.LIGHT_GRAY);
+        instructionText.setAlignmentX(CENTER_ALIGNMENT);
+
+        instructionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        instructionPanel.add(instructionTitle);
+        instructionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        instructionPanel.add(instructionText);
+        instructionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        gbc.gridy++;
+        add(instructionPanel, gbc);
 
         gbc.gridy++;
         classementLabel = new JLabel();
         afficherClassementAccueil();
         classementLabel.setForeground(Color.WHITE);
-        classementLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+        classementLabel.setFont(loadCustomFont("./mario_font.ttf", 20f));
         add(classementLabel, gbc);
 
         gbc.gridy++;
-        JLabel themeLabel = new JLabel("Choisissez un thème :");
-        themeLabel.setForeground(Color.WHITE);
-        themeLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        add(themeLabel, gbc);
-
-        gbc.gridy++;
-        String[] themes = {"Retro", "Light", "Dark"};
-        JComboBox<String> themeComboBox = new JComboBox<>(themes);
-        themeComboBox.setFont(new Font("Arial", Font.PLAIN, 20));
-        themeComboBox.setPreferredSize(new Dimension(200, 40));
-        themeComboBox.addActionListener(e -> {
-            game.setTheme((String) themeComboBox.getSelectedItem());
-            applyThemeToAllComponents(); 
-        });
-        add(themeComboBox, gbc);
-
-        gbc.gridy++;
-        JLabel instructionLabel = new JLabel("Entrez votre nom et choisissez le niveau de difficulte pour commencer.");
-        instructionLabel.setFont(new Font("Arial", Font.PLAIN, 24));
-        instructionLabel.setForeground(Color.LIGHT_GRAY);
-        add(instructionLabel, gbc);
-
-        gbc.gridy++;
-        JTextField nomJoueurField = new JTextField(20); 
-        nomJoueurField.setFont(new Font("Arial", Font.PLAIN, 24));
-        nomJoueurField.setMinimumSize(new Dimension(400, 40)); 
-        add(nomJoueurField, gbc);
-
-        gbc.gridy++;
-        JLabel difficultyLabel = new JLabel("Choisissez le niveau de difficulte :");
-        difficultyLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        difficultyLabel.setForeground(Color.WHITE);
-        add(difficultyLabel, gbc);
-
-        gbc.gridy++;
-        JPanel difficultyPanel = new JPanel(new GridLayout(1, 3, 20, 20));
+        difficultyPanel = new JPanel(new GridLayout(1, 3, 20, 20));
         difficultyPanel.setBackground(new Color(40, 44, 52));
 
+        // Boutons de difficulté
         JButton facileBtn = createCustomButton("Facile");
-        facileBtn.addActionListener(e -> game.commencerPartie(nomJoueurField.getText(), MasterMindGame.FACILE_MAX_TENTATIVES));
+        facileBtn.addActionListener(e -> afficherNomEtJouerBtn(MasterMindGame.FACILE_MAX_TENTATIVES));
         difficultyPanel.add(facileBtn);
 
         JButton moyenBtn = createCustomButton("Moyen");
-        moyenBtn.addActionListener(e -> game.commencerPartie(nomJoueurField.getText(), MasterMindGame.MOYEN_MAX_TENTATIVES));
+        moyenBtn.addActionListener(e -> afficherNomEtJouerBtn(MasterMindGame.MOYEN_MAX_TENTATIVES));
         difficultyPanel.add(moyenBtn);
 
         JButton difficileBtn = createCustomButton("Difficile");
-        difficileBtn.addActionListener(e -> game.commencerPartie(nomJoueurField.getText(), MasterMindGame.DIFFICILE_MAX_TENTATIVES));
+        difficileBtn.addActionListener(e -> afficherNomEtJouerBtn(MasterMindGame.DIFFICILE_MAX_TENTATIVES));
         difficultyPanel.add(difficileBtn);
 
         add(difficultyPanel, gbc);
+
+        // Initialement, on ne montre pas le champ pour le nom et le bouton commencer
+        gbc.gridy++;
+        nomJoueurField = new JTextField(20);
+        nomJoueurField.setFont(loadCustomFont("./mario_font.ttf", 24f));
+        nomJoueurField.setMinimumSize(new Dimension(400, 40));
+        nomJoueurField.setVisible(false); // Masqué initialement
+        add(nomJoueurField, gbc);
+
+        gbc.gridy++;
+        jouerBtn = new JButton("Commencer");
+        jouerBtn.setFont(loadCustomFont("./mario_font.ttf", 26f));
+        jouerBtn.setPreferredSize(new Dimension(200, 80));
+        jouerBtn.setBackground(new Color(70, 130, 180));
+        jouerBtn.setForeground(Color.WHITE);
+        jouerBtn.setVisible(false); // Masqué initialement
+        jouerBtn.addActionListener(e -> {
+            int maxTentatives = (int) jouerBtn.getClientProperty("maxTentatives");
+            game.commencerPartie(nomJoueurField.getText(), maxTentatives);
+        });
+        add(jouerBtn, gbc);
     }
 
-    private JButton createCustomButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 26));
-        button.setPreferredSize(new Dimension(200, 80));
-        button.setBackground(new Color(70, 130, 180));
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
-        return button;
+    // Méthode pour afficher le champ de nom et le bouton "Commencer" après sélection de la difficulté
+    private void afficherNomEtJouerBtn(int maxTentatives) {
+        // On cache les boutons de difficulté et affiche le champ de nom et le bouton "Commencer"
+        difficultyPanel.setVisible(false);
+
+        nomJoueurField.setVisible(true);
+        jouerBtn.setVisible(true);
+
+        jouerBtn.putClientProperty("maxTentatives", maxTentatives);
+
+        // Réarranger et rafraîchir la mise en page
+        revalidate();
+        repaint();
     }
 
-    private void afficherClassementAccueil() {
-        StringBuilder classementStr = new StringBuilder("<html><body><h2>Classement:</h2>");
-        for (int i = 0; i < game.getClassement().size(); i++) {
-            Score score = game.getClassement().get(i);
-            classementStr.append("<p>").append((i + 1)).append(". ").append(score.getNom())
-                .append(" - ").append(score.getTemps()).append("s</p>");
+    // Ouvrir la boîte de dialogue pour changer le thème
+    private void openThemeDialog() {
+        String[] themes = {"Retro", "Light", "Dark"};
+        String selectedTheme = (String) JOptionPane.showInputDialog(this,
+                "Sélectionnez un thème :",
+                "Choix du Thème",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                themes,
+                themes[0]);
+
+        if (selectedTheme != null) {
+            game.setTheme(selectedTheme);
+            applyThemeToAllComponents();
         }
-        classementStr.append("</body></html>");
-        classementLabel.setText(classementStr.toString());
-    }
 
-    private void applyThemeToAllComponents() {
-        game.setTheme(this); 
-    }
+        private JButton createCustomButton(String text) {
+            JButton button = new JButton(text);
+            button.setFont(loadCustomFont("./mario_font.ttf", 26f));
+            button.setPreferredSize(new Dimension(200, 80));
+            button.setBackground(new Color(70, 130, 180));
+            button.setForeground(Color.WHITE);
+            button.setFocusPainted(false);
+            button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+            return button;
+        }
 
-    private void initCircles() {
+        private void afficherClassementAccueil() {
+            List<Score> classement = game.getClassement();
+            if (classement.isEmpty()) {
+                classementLabel.setVisible(false);
+            } else {
+                StringBuilder classementStr = new StringBuilder("<html><body><h2>Classement:</h2>");
+                for (int i = 0; i < Math.min(classement.size(), 5); i++) {
+                    Score score = classement.get(i);
+                    if (i == 0) {
+                        classementStr.append("<p><b>").append((i + 1)).append(". ").append(score.getNom())
+                            .append(" <img src='file:./crown_icon.png' width='16' height='16'/> - ")
+                            .append(score.getTemps()).append("s</b></p>");
+                    } else {
+                        classementStr.append("<p>").append((i + 1)).append(". ").append(score.getNom())
+                            .append(" - ").append(score.getTemps()).append("s</p>");
+                    }
+                }
+                classementStr.append("</body></html>");
+                classementLabel.setText(classementStr.toString());
+                classementLabel.setVisible(true);
+            }
+        }
+
+        private void applyThemeToAllComponents() {
+            game.setTheme(this);
+        }
+
+        private void initCircles() {
         Random rand = new Random();
         for (int i = 0; i < 10; i++) {
-            int radius = 20 + rand.nextInt(40); 
-            int x = rand.nextInt(800); 
-            int y = rand.nextInt(600); 
-            int dx = 1 + rand.nextInt(5); 
-            int dy = 1 + rand.nextInt(5); 
-            Color color = new Color(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)); 
+            int radius = 20 + rand.nextInt(40);
+            int x = rand.nextInt(800);
+            int y = rand.nextInt(600);
+            int dx = 1 + rand.nextInt(5);
+            int dy = 1 + rand.nextInt(5);
+            Color color = new Color(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255));
             circles.add(new Circle(x, y, radius, dx, dy, color));
         }
     }
@@ -151,8 +235,19 @@ public class AccueilPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
+        g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         for (Circle circle : circles) {
             circle.draw(g2d);
+        }
+    }
+
+    private Font loadCustomFont(String path, float size) {
+        try {
+            Font font = Font.createFont(Font.TRUETYPE_FONT, new java.io.File(path));
+            return font.deriveFont(size);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Font("Arial", Font.PLAIN, (int) size);
         }
     }
 
