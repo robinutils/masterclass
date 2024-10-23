@@ -48,7 +48,7 @@ public class AccueilPanel extends JPanel {
         gbc.gridy = 0;
         ImageIcon settingsIcon = new ImageIcon("./gear_icon.png"); 
         JButton settingsButton = new JButton(settingsIcon);
-        settingsButton.setPreferredSize(new Dimension(20, 20));
+        settingsButton.setPreferredSize(new Dimension(200, 200));
         settingsButton.setBorder(BorderFactory.createEmptyBorder());
         settingsButton.setContentAreaFilled(false);
         settingsButton.addActionListener(e -> openThemeDialog());
@@ -137,8 +137,13 @@ public class AccueilPanel extends JPanel {
         jouerBtn.setForeground(Color.WHITE);
         jouerBtn.setVisible(false); // Masqué initialement
         jouerBtn.addActionListener(e -> {
+            String nomJoueur = nomJoueurField.getText().trim();
+            if (nomJoueur.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Veuillez entrer un nom de joueur.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            } else {
             int maxTentatives = (int) jouerBtn.getClientProperty("maxTentatives");
-            game.commencerPartie(nomJoueurField.getText(), maxTentatives);
+            game.commencerPartie(nomJoueur, maxTentatives);
+            }
         });
         add(jouerBtn, gbc);
     }
@@ -173,16 +178,17 @@ public class AccueilPanel extends JPanel {
             game.setTheme(selectedTheme);
             applyThemeToAllComponents();
         }
+    }
 
-        private JButton createCustomButton(String text) {
-            JButton button = new JButton(text);
-            button.setFont(loadCustomFont("./mario_font.ttf", 26f));
-            button.setPreferredSize(new Dimension(200, 80));
-            button.setBackground(new Color(70, 130, 180));
-            button.setForeground(Color.WHITE);
-            button.setFocusPainted(false);
-            button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
-            return button;
+    private JButton createCustomButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(loadCustomFont("./mario_font.ttf", 26f));
+        button.setPreferredSize(new Dimension(200, 80));
+        button.setBackground(new Color(70, 130, 180));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+        return button;
         }
 
         private void afficherClassementAccueil() {
@@ -209,10 +215,10 @@ public class AccueilPanel extends JPanel {
         }
 
         private void applyThemeToAllComponents() {
-            game.setTheme(this);
-        }
+        game.setTheme(this);
+    }
 
-        private void initCircles() {
+    private void initCircles() {
         Random rand = new Random();
         for (int i = 0; i < 10; i++) {
             int radius = 20 + rand.nextInt(40);
